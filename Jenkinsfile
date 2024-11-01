@@ -1,25 +1,30 @@
 pipeline {
-  agent any
-  stages {
-    stage('Build') {
-      steps {
-        sh 'docker-compose up --build -d'
-      }
+    agent any
+
+    stages {
+        stage('Build Containers') {
+            steps {
+                script {
+                    // Step 1: Constrói os containers definidos no docker-compose.yml
+                    sh 'docker compose build'
+                }
+            }
+        }
+
+        stage('Start Application') {
+            steps {
+                script {
+                    // Step 2: Inicia os containers
+                    sh 'docker compose up -d'
+                }
+            }
+        }
     }
-    stage('Test') {
-      steps {
-        sh 'docker-compose exec app pytest'
-      }
+
+    post {
+        always {
+            // Limpa os containers e redes criados pelo docker-compose
+            sh 'docker compose down'
+        }
     }
-    stage('Deploy') {
-      steps {
-        sh 'docker-compose up -d'
-      }
-    }
-  }
-  post {
-    always {
-      sh 'docker-compose down'
-    }
-  }
 }
