@@ -1,7 +1,3 @@
-# docker-compose.yml para orquestrar ambos os containers
-# Salve este arquivo como docker-compose.yml na raiz do projeto
-
-# docker-compose.yml
 version: '3.9'
 
 services:
@@ -37,5 +33,38 @@ services:
       FLASK_DB_PASSWORD: flask_password
       FLASK_DB_NAME: school_db
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus_container
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana_container
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  mysqld_exporter:
+    image: prom/mysqld-exporter:latest
+    container_name: mysqld_exporter_container
+    environment:
+      - DATA_SOURCE_NAME=flask_user:flask_password@tcp(mariadb:3306)/school_db
+    depends_on:
+      - mariadb
+    ports:
+      - "9104:9104"
+
 volumes:
   db_data:
+  grafana_data:
